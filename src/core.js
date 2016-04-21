@@ -503,6 +503,14 @@ function _buildSquel(flavour = null) {
       return str;
     }
 
+    _applyLateralFormatting(str, lateral = false) {
+      if (str && typeof str === 'string' && lateral) {
+        return `LATERAL ${str}`;
+      }
+
+      return str;
+    }
+
 
     /** 
      * Build given string and its corresponding parameter values into 
@@ -1123,6 +1131,7 @@ function _buildSquel(flavour = null) {
     # Internally this method simply calls the field() method of this block to add each individual field.
     #
     # options.ignorePeriodsForFieldNameQuotes - whether to ignore period (.) when automatically quoting the field name
+    # options.lateral - whether to prefix a subquery with the LATERAL keyword
     */
     fields (_fields, options = {}) {
       if (_isArray(_fields)) {
@@ -1188,7 +1197,7 @@ function _buildSquel(flavour = null) {
             buildParameterized: buildParameterized,
           });
 
-          totalStr += ret.text;
+          totalStr += this._applyLateralFormatting(ret.text, options && options.lateral);
           totalValues.push(...ret.values);
         }
 
@@ -1734,9 +1743,11 @@ function _buildSquel(flavour = null) {
     # 'condition' is an optional condition (containing an SQL expression) for the JOIN.
     #
     # 'type' must be either one of INNER, OUTER, LEFT or RIGHT. Default is 'INNER'.
-    #
+    # 
+    # 'options' is an object with additional options that can be applied to the join:
+    # * 'lateral' will apply the LATERAL keyword to the join
     */
-    join (table, alias = null, condition = null, type = 'INNER') {
+    join (table, alias = null, condition = null, type = 'INNER', options = {}) {
       table = this._sanitizeTable(table, true);
       alias = alias ? this._sanitizeTableAlias(alias) : alias;
       condition = condition ? this._sanitizeExpression(condition) : condition;
@@ -1746,31 +1757,32 @@ function _buildSquel(flavour = null) {
         table: table,
         alias: alias,
         condition: condition,
+        options: options
       });
     }
 
-    left_join (table, alias = null, condition = null) {
-      this.join(table, alias, condition, 'LEFT');
+    left_join (table, alias = null, condition = null, options = {}) {
+      this.join(table, alias, condition, 'LEFT', options);
     }
 
-    right_join (table, alias = null, condition = null) {
-      this.join(table, alias, condition, 'RIGHT');
+    right_join (table, alias = null, condition = null, options = {}) {
+      this.join(table, alias, condition, 'RIGHT', options);
     }
 
-    outer_join (table, alias = null, condition = null) {
-      this.join(table, alias, condition, 'OUTER');
+    outer_join (table, alias = null, condition = null, options = {}) {
+      this.join(table, alias, condition, 'OUTER', options);
     }
 
-    left_outer_join (table, alias = null, condition = null) {
-      this.join(table, alias, condition, 'LEFT OUTER');
+    left_outer_join (table, alias = null, condition = null, options = {}) {
+      this.join(table, alias, condition, 'LEFT OUTER', options);
     }
 
-    full_join (table, alias = null, condition = null) {
-      this.join(table, alias, condition, 'FULL');
+    full_join (table, alias = null, condition = null, options = {}) {
+      this.join(table, alias, condition, 'FULL', options);
     }
 
-    cross_join (table, alias = null, condition = null) {
-      this.join(table, alias, condition, 'CROSS');
+    cross_join (table, alias = null, condition = null, options = {}) {
+      this.join(table, alias, condition, 'CROSS', options);
     }
 
 
@@ -1778,7 +1790,7 @@ function _buildSquel(flavour = null) {
       let totalStr = "",  
         totalValues = [];
 
-      for (let {type, table, alias, condition} of this._joins) {
+      for (let {type, table, alias, condition, options: joinOptions} of this._joins) {
         totalStr = _pad(totalStr, this.options.separator);
 
         let tableStr;
@@ -1794,6 +1806,8 @@ function _buildSquel(flavour = null) {
         } else {
           tableStr = this._formatTableName(table);
         }
+
+        tableStr = this._applyLateralFormatting(tableStr, joinOptions && joinOptions.lateral);
 
         totalStr += `${type} JOIN ${tableStr}`;
 
