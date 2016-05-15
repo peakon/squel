@@ -6,6 +6,8 @@ A flexible and powerful SQL query string builder for Javascript.
 
 Full documentation (guide and API) at [http://squeljs.org/](http://squeljs.org/).
 
+**Note: The latest Squel version only works on Node 0.12 or above. Please use Squel 4.4.1 for Node <0.12. The [old 4.x docs](http://hiddentao.github.io/squel/v4/index.html) are also still available.**
+
 ## Features
 
 * Works in node.js and in the browser.
@@ -55,16 +57,6 @@ squel.select()
     .from("table")
     .toString()
 
-// SELECT `t1`.`id`, `t1`.`name` as "My name", `t1`.`started` as "Date" FROM table `t1` ORDER BY id ASC LIMIT 20
-squel.select({ autoQuoteFieldNames: true })
-    .from("table", "t1")
-    .field("t1.id")
-    .field("t1.name", "My name")
-    .field("t1.started", "Date")
-    .order("id")
-    .limit(20)
-    .toString()
-
 // SELECT t1.id, t2.name FROM table `t1` LEFT JOIN table2 `t2` ON (t1.id = t2.id) WHERE (t2.name <> 'Mark') AND (t2.name <> 'John') GROUP BY t1.id
 squel.select()
     .from("table", "t1")
@@ -75,9 +67,41 @@ squel.select()
     .where("t2.name <> 'Mark'")
     .where("t2.name <> 'John'")
     .toString()
+
+// SELECT `t1`.`id`, `t1`.`name` as "My name", `t1`.`started` as "Date" FROM table `t1` WHERE age IN (RANGE(1, 1.2)) ORDER BY id ASC LIMIT 20
+squel.select({ autoQuoteFieldNames: true })
+    .from("table", "t1")
+    .field("t1.id")
+    .field("t1.name", "My name")
+    .field("t1.started", "Date")
+    .where("age IN ?", squel.str('RANGE(?, ?)', 1, 1.2))
+    .order("id")
+    .limit(20)
+    .toString()
 ```
 
-You can use nested queries too:
+You can build parameterized queries:
+
+```js
+/*
+{
+    text: "SELECT `t1`.`id`, `t1`.`name` as "My name", `t1`.`started` as "Date" FROM table `t1` WHERE age IN (RANGE(?, ?)) ORDER BY id ASC LIMIT 20",
+    values: [1, 1.2]
+}
+*/
+squel.select({ autoQuoteFieldNames: true })
+    .from("table", "t1")
+    .field("t1.id")
+    .field("t1.name", "My name")
+    .field("t1.started", "Date")
+    .where("age IN ?", squel.str('RANGE(?, ?)', 1, 1.2))
+    .order("id")
+    .limit(20)
+    .toParam()
+```
+
+
+You can use nested queries:
 
 ```javascript
 // SELECT s.id FROM (SELECT * FROM students) `s` INNER JOIN (SELECT id FROM marks) `m` ON (m.id = s.id)

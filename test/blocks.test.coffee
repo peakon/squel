@@ -326,6 +326,29 @@ test['Blocks'] =
 
 
 
+  'TargetTableBlock':
+    beforeEach: ->
+      @cls = squel.cls.TargetTableBlock
+      @inst = new @cls()
+
+    'instanceof of AbstractTableBlock': ->
+      assert.instanceOf @inst, squel.cls.AbstractTableBlock
+
+    'check prefix': ->
+      assert.same @inst.options.prefix, undefined
+
+    'table()':
+      'calls base class handler': ->
+        baseMethodSpy = test.mocker.stub squel.cls.AbstractTableBlock.prototype, '_table'
+
+        @inst.target('table1')
+        @inst.target('table2')
+
+        assert.same 2, baseMethodSpy.callCount
+        assert.ok baseMethodSpy.calledWithExactly('table1')
+        assert.ok baseMethodSpy.calledWithExactly('table2')
+
+
 
 
   'IntoTableBlock':
@@ -808,7 +831,7 @@ test['Blocks'] =
         assert.ok spy.calledWithExactly 'two'
 
       'sanitizes query': ->
-        spy = test.mocker.stub @inst, '_sanitizeQueryBuilder', -> 1
+        spy = test.mocker.stub @inst, '_sanitizeBaseBuilder', -> 1
 
         qry = 123
 
@@ -840,12 +863,12 @@ test['Blocks'] =
           @inst.fromQuery ['test', 'one', 'two'], @qry          
         'non-parameterized': ->
           assert.same @inst._toParamString(), {
-            text: "(test, one, two) ((SELECT * FROM mega WHERE (a = 5)))"
+            text: "(test, one, two) (SELECT * FROM mega WHERE (a = 5))"
             values: []
           }
         'parameterized': ->
           assert.same @inst._toParamString(buildParameterized: true), {
-            text: "(test, one, two) ((SELECT * FROM mega WHERE (a = ?)))"
+            text: "(test, one, two) (SELECT * FROM mega WHERE (a = ?))"
             values: [5]
           }
 

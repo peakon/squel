@@ -269,19 +269,19 @@ function _buildSquel(flavour = null) {
     }
 
 
-    _sanitizeQueryBuilder (item) {
-      if (item instanceof cls.QueryBuilder) {
+    _sanitizeBaseBuilder (item) {
+      if (item instanceof cls.BaseBuilder) {
         return item;
       }
 
-      throw new Error("must be a QueryBuilder instance");
+      throw new Error("must be a BaseBuilder instance");
     }
 
 
     _sanitizeTable (item) {
       if (typeof item !== "string") {
         try {
-          item = this._sanitizeQueryBuilder(item);
+          item = this._sanitizeBaseBuilder(item);
         } catch (e) {
           throw new Error("table name must be a string or a query builder");
         }
@@ -1041,6 +1041,15 @@ function _buildSquel(flavour = null) {
 
 
 
+  // target table for DELETE queries, DELETE <??> FROM
+  cls.TargetTableBlock = class extends cls.AbstractTableBlock {
+    target (table) {
+      this._table(table);
+    }
+  }
+
+
+
   // Update Table
   cls.UpdateTableBlock = class extends cls.AbstractTableBlock {
     table (table, alias = null) {
@@ -1068,11 +1077,6 @@ function _buildSquel(flavour = null) {
     from (table, alias = null) {
       this._table(table, alias);
     }
-
-    _toParamString (options = {}) {
-      return super._toParamString(options);
-    }
-
   }
 
 
@@ -1097,6 +1101,7 @@ function _buildSquel(flavour = null) {
       return super._toParamString(options);
     }
   }
+
 
 
   // (SELECT) Get field
@@ -1404,7 +1409,7 @@ function _buildSquel(flavour = null) {
 
       return { 
         text: fieldString.length 
-          ? `(${fieldString}) VALUES (${valueStrings.join('), (')})`
+          ? `(${fieldString}) VALUES ${this._applyNestingFormatting(valueStrings.join('), ('))}`
           : '',
         values: totalValues 
       };
@@ -1428,7 +1433,7 @@ function _buildSquel(flavour = null) {
         return this._sanitizeField(v);
       });
 
-      this._query = this._sanitizeQueryBuilder(selectQuery);
+      this._query = this._sanitizeBaseBuilder(selectQuery);
     }
 
     _toParamString (options = {}) {
@@ -1441,7 +1446,7 @@ function _buildSquel(flavour = null) {
           nested: true,
         });
 
-        totalStr = `(${this._fields.join(', ')}) (${text})`;
+        totalStr = `(${this._fields.join(', ')}) ${this._applyNestingFormatting(text)}`;
         totalValues = values;
       }
 
@@ -2064,6 +2069,7 @@ function _buildSquel(flavour = null) {
     constructor (options, blocks = null) {
       blocks = blocks || [
         new cls.StringBlock(options, 'DELETE'),
+        new cls.TargetTableBlock(options),
         new cls.FromTableBlock(_extend({}, options, {
           singleTable: true
         })),
