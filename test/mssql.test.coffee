@@ -32,8 +32,8 @@ test = testCreator()
 
 test['MSSQL flavour'] =
   beforeEach: ->
-    delete require.cache[require.resolve('../squel')]
-    squel = require "../squel"
+    delete require.cache[require.resolve('../dist/squel')]
+    squel = require "../dist/squel"
     squel = squel.useFlavour 'mssql'
 
   'DATE Conversion':
@@ -42,7 +42,7 @@ test['MSSQL flavour'] =
     '>> into(table).set(field, new Date(2012-12-12T4:30:00Z))':
       beforeEach: -> @inst.into('table').set('field', new Date("2012-12-12T04:30:00Z"))
       toString: ->
-        assert.same @inst.toString(), 'INSERT INTO table (field) VALUES (\'2012-12-12 4:30:0\')'
+        assert.same @inst.toString(), 'INSERT INTO table (field) VALUES ((\'2012-12-12 4:30:0\'))'
 
   'SELECT builder':
     beforeEach: ->
@@ -155,6 +155,7 @@ test['MSSQL flavour'] =
       replaceSingleQuotes: true
       singleQuoteReplacement: '\'\''
       separator: ' '
+      stringFormatter: null
     }, squel.cls.DefaultQueryBuilderOptions
 
 module?.exports[require('path').basename(__filename)] = test

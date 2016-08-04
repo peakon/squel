@@ -24,7 +24,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ###
 
 
-squel = require "../squel-basic"
+squel = require "../dist/squel-basic"
 {_, testCreator, assert, expect, should} = require './testbase'
 test = testCreator()
 
@@ -201,6 +201,11 @@ test['SELECT builder'] =
                   toString: ->
                     assert.same @inst.toString(), 'SELECT DISTINCT field1 AS "fa1", field2 FROM table, table2 `alias2` INNER JOIN other_table WHERE (a = 1) GROUP BY field, field2 ORDER BY a'
 
+                '>> order(a, \'asc nulls last\')':
+                  beforeEach: -> @inst.order('a', 'asc nulls last')
+                  toString: ->
+                    assert.same @inst.toString(), 'SELECT DISTINCT field1 AS "fa1", field2 FROM table, table2 `alias2` INNER JOIN other_table WHERE (a = 1) GROUP BY field, field2 ORDER BY a asc nulls last'
+
                 '>> order(a, true)':
                   beforeEach: -> @inst.order('a', true)
                   toString: ->
@@ -350,6 +355,44 @@ test['SELECT builder'] =
         FROM table
       """
     )
+
+  '#242 - auto-quote table names':
+    beforeEach: ->
+      @inst = squel
+        .select({ autoQuoteTableNames: true })
+        .field('name')
+        .where('age > ?', 15)      
+
+    'using string': 
+      beforeEach: ->
+        @inst.from('students', 's')
+
+      toString: ->
+        assert.same @inst.toString(), """
+        SELECT name FROM `students` `s` WHERE (age > 15)
+        """
+
+      toParam: ->
+        assert.same @inst.toParam(), {
+          "text": "SELECT name FROM `students` `s` WHERE (age > ?)"
+          "values": [15]
+        }
+
+    'using query builder': 
+      beforeEach: ->
+        @inst.from(squel.select().from('students'), 's')
+
+      toString: ->
+        assert.same @inst.toString(), """
+        SELECT name FROM (SELECT * FROM students) `s` WHERE (age > 15)
+        """
+
+      toParam: ->
+        assert.same @inst.toParam(), {
+          "text": "SELECT name FROM (SELECT * FROM students) `s` WHERE (age > ?)"
+          "values": [15]
+        }
+
 
   'UNION JOINs':
     'Two Queries NO Params':

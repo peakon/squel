@@ -9,7 +9,11 @@ const gulp = require('gulp'),
   babel = require('gulp-babel'),
   replace = require('gulp-replace'),
   uglify = require('gulp-uglify'),
-  runSequence = require('run-sequence');
+  runSequence = require('run-sequence'),
+  argv = require('yargs').argv;
+
+
+const onlyTest = argv.onlyTest || argv.limitTest;
 
 
 const SQUEL_VERSION = require('./package.json').version;
@@ -33,11 +37,11 @@ gulp.task('build-basic', function() {
         return 'squel';
       }
     }))
-    .pipe( gulp.dest('./') )
+    .pipe( gulp.dest('./dist') )
     .pipe( uglify() )
     .pipe( insert.prepend('/*! squel | https://github.com/hiddentao/squel | BSD license */') )
     .pipe( concat('squel-basic.min.js') )
-    .pipe( gulp.dest('./') )
+    .pipe( gulp.dest('./dist') )
 });
 
 
@@ -61,17 +65,19 @@ gulp.task('build-full', function() {
         return 'squel';
       }
     }))
-    .pipe( gulp.dest('./') )
+    .pipe( gulp.dest('./dist') )
     .pipe( uglify() )
     .pipe( insert.prepend('/*! squel | https://github.com/hiddentao/squel | BSD license */') )
     .pipe( concat('squel.min.js') )
-    .pipe( gulp.dest('./') )
+    .pipe( gulp.dest('./dist') )
 });
 
 
+gulp.task('build', ['build-basic', 'build-full']);
+
 
 gulp.task('test', function () {
-  return gulp.src([
+  return gulp.src(onlyTest || [
       './test/baseclasses.test.coffee',
       './test/blocks.test.coffee',
       './test/case.test.coffee',
@@ -93,8 +99,9 @@ gulp.task('test', function () {
 });
 
 
+
 gulp.task('default', function(cb) {
-  runSequence(['build-basic', 'build-full'], 'test', cb);
+  runSequence(['build'], 'test', cb);
 });
 
 

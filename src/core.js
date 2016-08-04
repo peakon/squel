@@ -10,9 +10,7 @@ function _extend (dst, ...sources) {
     for (let src of sources) {
       if (typeof src === 'object') {
         Object.getOwnPropertyNames(src).forEach(function (key) {
-          if (typeof src[key] !== 'function') {
-            dst[key] = src[key];
-          }
+          dst[key] = src[key];
         });
       }
     }
@@ -160,6 +158,8 @@ function _buildSquel(flavour = null) {
     singleQuoteReplacement: '\'\'',
     // String used to join individual blocks in a query when it's stringified
     separator: ' ',
+    // Function for formatting string values prior to insertion into query string
+    stringFormatter: null,
   };
 
   // Global custom value handlers for all instances of builder
@@ -470,6 +470,11 @@ function _buildSquel(flavour = null) {
           value = this._applyNestingFormatting(value.toString());
         }
         else if (typeofValue !== "number") {
+          // if it's a string and we have custom string formatting turned on then use that
+          if ('string' === typeofValue && this.options.stringFormatter) {
+            return this.options.stringFormatter(value);
+          }
+
           if (formattingOptions.dontQuote) {
             value = `${value}`;
           } else {
@@ -516,7 +521,7 @@ function _buildSquel(flavour = null) {
      * @param {Boolean} [options.formattingOptions] Formatting options for values in query string.
      * @return {Object}
      */
-    _buildString(str, values, options = {}) {
+    _buildString (str, values, options = {}) {
       let { nested, buildParameterized, formattingOptions } = options;
 
       values = values || [];
@@ -1007,7 +1012,7 @@ function _buildSquel(flavour = null) {
         for (let { table, alias } of this._tables) {
           totalStr = _pad(totalStr, ', ');
 
-          let tableStr = table;
+          let tableStr;
 
           if (table instanceof cls.BaseBuilder) {
             let { text, values } = table._toParamString({
@@ -1017,6 +1022,8 @@ function _buildSquel(flavour = null) {
 
             tableStr = text;
             totalValues.push(...values);            
+          } else {
+            tableStr = this._formatTableName(table);
           }
 
           if (alias) {
@@ -1339,22 +1346,21 @@ function _buildSquel(flavour = null) {
         let value = this._values[0][i];
 
         // e.g. field can be an expression such as `count = count + 1`
-        if (typeof value === 'undefined') {
-          totalStr += field;
+        if (0 > field.indexOf('=')) {
+          field = `${field} = ${this.options.parameterCharacter}`;
         }
-        else {
-          let ret = this._buildString(
-            `${field} = ${this.options.parameterCharacter}`, 
-            [value],
-            {
-              buildParameterized: buildParameterized,
-              formattingOptions: this._valueOptions[0][i],
-            }
-          );
 
-          totalStr += ret.text;
-          totalValues.push(...ret.values);
-        }
+        let ret = this._buildString(
+          field,
+          [value],
+          {
+            buildParameterized: buildParameterized,
+            formattingOptions: this._valueOptions[0][i],
+          }
+        );
+
+        totalStr += ret.text;
+        totalValues.push(...ret.values);
       }
 
       return { 
@@ -1409,7 +1415,7 @@ function _buildSquel(flavour = null) {
 
       return { 
         text: fieldString.length 
-          ? `(${fieldString}) VALUES ${this._applyNestingFormatting(valueStrings.join('), ('))}`
+          ? `(${fieldString}) VALUES (${valueStrings.join('), (')})`
           : '',
         values: totalValues 
       };
@@ -1626,17 +1632,22 @@ function _buildSquel(flavour = null) {
     /**
     # Add an ORDER BY transformation for the given field in the given order.
     #
-    # To specify descending order pass false for the 'asc' parameter.
+    # To specify descending order pass false for the 'dir' parameter.
     */
-    order (field, asc, ...values) {
+    order (field, dir, ...values) {
       field = this._sanitizeField(field);
 
-      asc = (asc === undefined) ? true : asc;
-      asc = (asc !== null) ? !!asc : asc;
+      if (!(typeof dir === 'string')) {
+        if (dir === undefined) {
+          dir = 'ASC' // Default to asc
+        } else if (dir !== null) {
+          dir = dir ? 'ASC' : 'DESC'; // Convert truthy to asc
+        }
+      }
 
       this._orders.push({
         field: field,
-        dir: asc,   
+        dir: dir,   
         values: values,
       });
     }
@@ -1656,7 +1667,7 @@ function _buildSquel(flavour = null) {
         totalValues.push(...ret.values);
 
         if (dir !== null) {
-          totalStr += ` ${dir ? 'ASC' : 'DESC'}`;
+          totalStr += ` ${dir}`;
         }
       }
 
@@ -1713,8 +1724,7 @@ function _buildSquel(flavour = null) {
     #
     # 'alias' is an optional alias for the table name.
     #
-    # 'condition' is an optional condition (containing an SQL expression) for the JOIN. If this is an instance of
-    # an expression builder then it gets evaluated straight away.
+    # 'condition' is an optional condition (containing an SQL expression) for the JOIN.
     #
     # 'type' must be either one of INNER, OUTER, LEFT or RIGHT. Default is 'INNER'.
     # 
@@ -2100,7 +2110,7 @@ function _buildSquel(flavour = null) {
       super(options, blocks);
     }
   }
-
+  
 
   let _squel = {
     VERSION: '<<VERSION_STRING>>',

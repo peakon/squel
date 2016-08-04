@@ -1,5 +1,23 @@
 # Changelog for [squel](https://github.com/hiddentao/squel)
 
+## 12 Jul 2016 (5.3.3)
+* #249 - Postgres `DISTINCT ON` clause
+
+## 13 Jun 2016 (5.3.2)
+* #234 - Fix handling of expression field names
+
+## 5 Jun 2016 (5.3.1)
+* #158, #239 - Support for CTE queries (`WITH` clause)
+* #242 - Fix auto-quoting table names
+* Removed bower.json
+
+## 18 May 2016 (5.2.1)
+* Re-fix for #109 - custom string formatting wasn't quite working
+
+## 18 May 2016 (5.2.0)
+* Fix for #109 - custom string formatting function enabled
+* Fix for #235 - fix a regression
+
 ## 14 May 2016 (5.1.0)
 * Fix for #231 - try not to add extra brackets
 * Fix for #233 - ability to specify target table in `DELETE` queries

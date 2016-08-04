@@ -24,7 +24,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ###
 
 
-squel = require "../squel-basic"
+squel = require "../dist/squel-basic"
 {_, testCreator, assert, expect, should} = require './testbase'
 test = testCreator()
 
@@ -201,6 +201,17 @@ test['UPDATE builder'] =
     toParam: ->  
       assert.same { text: 'UPDATE students SET field = (GETDATE(?, ?))', values: [2014, '"feb"'] }, @inst.toParam()
 
+  'string formatting':
+    beforeEach: -> 
+      @inst.updateOptions {
+        stringFormatter: (str) -> "N'#{str}'"
+      }
+      @inst.table('students').set('field', 'jack')
+    toString: ->
+      assert.same 'UPDATE students SET field = N\'jack\'', @inst.toString()
+    toParam: ->  
+      assert.same { text: 'UPDATE students SET field = ?', values: ["jack"] }, @inst.toParam()
+
   'fix for hiddentao/squel#63': ->
     newinst = @inst.table('students').set('field = field + 1')
     newinst.set('field2', 2).set('field3', true)
@@ -248,6 +259,17 @@ test['UPDATE builder'] =
       assert.same @inst.toParam(), {
         text: 'UPDATE users SET `active` = ?, `regular` = ?, `moderator` = ? WHERE (id = ?)',
         values: [1, 0, 1, 123],
+      }
+
+  'fix for #243 - ampersand in conditions':
+    beforeEach: ->
+      @inst = squel.update().table('a').set('a = a & ?', 2)
+    toString: ->
+      assert.same @inst.toString(), 'UPDATE a SET a = a & 2'
+    toParam: ->
+      assert.same @inst.toParam(), {
+        text: 'UPDATE a SET a = a & ?',
+        values: [2],
       }
 
   'cloning': ->
