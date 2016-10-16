@@ -13,7 +13,7 @@ var _get = function get(object, property, receiver) { if (object === null) objec
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -236,7 +236,7 @@ function getValueHandler(value) {
  * Build base squel classes and methods
  */
 function _buildSquel() {
-  var flavour = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var flavour = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   var cls = {
     _getObjectClassName: _getObjectClassName
@@ -332,11 +332,10 @@ function _buildSquel() {
      * Constructor.
      * this.param  {Object} options Overriding one or more of `cls.DefaultQueryBuilderOptions`.
      */
-
     function _class2(options) {
       _classCallCheck(this, _class2);
 
-      var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(_class2).call(this));
+      var _this = _possibleConstructorReturn(this, (_class2.__proto__ || Object.getPrototypeOf(_class2)).call(this));
 
       var defaults = JSON.parse(JSON.stringify(cls.DefaultQueryBuilderOptions));
 
@@ -460,16 +459,16 @@ function _buildSquel() {
         if (null === item) {
           // null is allowed
         } else if ("string" === itemType || "number" === itemType || "boolean" === itemType) {
-            // primitives are allowed
-          } else if (item instanceof cls.BaseBuilder) {
-              // Builders allowed
-            } else {
-                var typeIsValid = !!getValueHandler(item, this.options.valueHandlers, cls.globalValueHandlers);
+          // primitives are allowed
+        } else if (item instanceof cls.BaseBuilder) {
+          // Builders allowed
+        } else {
+          var typeIsValid = !!getValueHandler(item, this.options.valueHandlers, cls.globalValueHandlers);
 
-                if (!typeIsValid) {
-                  throw new Error("field value must be a string, number, boolean, null or one of the registered custom value types");
-                }
-              }
+          if (!typeIsValid) {
+            throw new Error("field value must be a string, number, boolean, null or one of the registered custom value types");
+          }
+        }
 
         return item;
       }
@@ -519,7 +518,7 @@ function _buildSquel() {
       value: function _formatFieldName(item) {
         var _this2 = this;
 
-        var formattingOptions = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var formattingOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         if (this.options.autoQuoteFieldNames) {
           (function () {
@@ -569,7 +568,7 @@ function _buildSquel() {
       value: function _formatValueForParamArray(value) {
         var _this3 = this;
 
-        var formattingOptions = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var formattingOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         if (_isArray(value)) {
           return value.map(function (v) {
@@ -589,7 +588,7 @@ function _buildSquel() {
       value: function _formatValueForQueryString(initialValue) {
         var _this4 = this;
 
-        var formattingOptions = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var formattingOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         var _formatCustomValue2 = this._formatCustomValue(initialValue, false, formattingOptions);
 
@@ -639,13 +638,24 @@ function _buildSquel() {
     }, {
       key: '_applyNestingFormatting',
       value: function _applyNestingFormatting(str) {
-        var nesting = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+        var nesting = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
         if (str && typeof str === 'string' && nesting) {
           // don't want to apply twice
           if ('(' !== str.charAt(0) || ')' !== str.charAt(str.length - 1)) {
             return '(' + str + ')';
           }
+        }
+
+        return str;
+      }
+    }, {
+      key: '_applyLateralFormatting',
+      value: function _applyLateralFormatting(str) {
+        var lateral = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+        if (str && typeof str === 'string' && lateral) {
+          return 'LATERAL ' + str;
         }
 
         return str;
@@ -667,7 +677,7 @@ function _buildSquel() {
     }, {
       key: '_buildString',
       value: function _buildString(str, values) {
-        var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         var nested = options.nested;
         var buildParameterized = options.buildParameterized;
         var formattingOptions = options.formattingOptions;
@@ -749,7 +759,7 @@ function _buildSquel() {
     }, {
       key: '_buildManyStrings',
       value: function _buildManyStrings(strings, strValues) {
-        var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         var totalStr = [],
             totalValues = [];
@@ -802,7 +812,7 @@ function _buildSquel() {
     }, {
       key: 'toString',
       value: function toString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         return this._toParamString(options).text;
       }
@@ -815,7 +825,7 @@ function _buildSquel() {
     }, {
       key: 'toParam',
       value: function toParam() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         return this._toParamString(_extend({}, options, {
           buildParameterized: true
@@ -849,11 +859,10 @@ function _buildSquel() {
     _inherits(_class3, _cls$BaseBuilder);
 
     // Initialise the expression.
-
     function _class3(options) {
       _classCallCheck(this, _class3);
 
-      var _this5 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class3).call(this, options));
+      var _this5 = _possibleConstructorReturn(this, (_class3.__proto__ || Object.getPrototypeOf(_class3)).call(this, options));
 
       _this5._nodes = [];
       return _this5;
@@ -902,7 +911,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = [],
             totalValues = [];
@@ -980,11 +989,11 @@ function _buildSquel() {
     _inherits(_class4, _cls$BaseBuilder2);
 
     function _class4(fieldName) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       _classCallCheck(this, _class4);
 
-      var _this6 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class4).call(this, options));
+      var _this6 = _possibleConstructorReturn(this, (_class4.__proto__ || Object.getPrototypeOf(_class4)).call(this, options));
 
       if (_isPlainObject(fieldName)) {
         options = fieldName;
@@ -1038,7 +1047,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = '',
             totalValues = [];
@@ -1127,7 +1136,7 @@ function _buildSquel() {
     function _class5(options) {
       _classCallCheck(this, _class5);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class5).call(this, options));
+      return _possibleConstructorReturn(this, (_class5.__proto__ || Object.getPrototypeOf(_class5)).call(this, options));
     }
 
     /**
@@ -1172,7 +1181,7 @@ function _buildSquel() {
     function _class6(options, str) {
       _classCallCheck(this, _class6);
 
-      var _this8 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class6).call(this, options));
+      var _this8 = _possibleConstructorReturn(this, (_class6.__proto__ || Object.getPrototypeOf(_class6)).call(this, options));
 
       _this8._str = str;
       return _this8;
@@ -1181,7 +1190,7 @@ function _buildSquel() {
     _createClass(_class6, [{
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         return {
           text: this._str,
@@ -1200,7 +1209,7 @@ function _buildSquel() {
     function _class7(options) {
       _classCallCheck(this, _class7);
 
-      var _this9 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class7).call(this, options));
+      var _this9 = _possibleConstructorReturn(this, (_class7.__proto__ || Object.getPrototypeOf(_class7)).call(this, options));
 
       _this9._strings = [];
       _this9._values = [];
@@ -1221,7 +1230,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         return this._buildManyStrings(this._strings, this._values, options);
       }
@@ -1232,7 +1241,7 @@ function _buildSquel() {
 
   // value handler for FunctionValueBlock objects
   cls.registerValueHandler(cls.FunctionBlock, function (value) {
-    var asParam = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+    var asParam = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
     return asParam ? value.toParam() : value.toString();
   });
@@ -1247,11 +1256,10 @@ function _buildSquel() {
      * @param {Boolean} [options.singleTable] If true then only allow one table spec.
      * @param {String} [options.prefix] String prefix for output.
      */
-
     function _class8(options, prefix) {
       _classCallCheck(this, _class8);
 
-      var _this10 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class8).call(this, options));
+      var _this10 = _possibleConstructorReturn(this, (_class8.__proto__ || Object.getPrototypeOf(_class8)).call(this, options));
 
       _this10._tables = [];
       return _this10;
@@ -1269,7 +1277,7 @@ function _buildSquel() {
     _createClass(_class8, [{
       key: '_table',
       value: function _table(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
         alias = alias ? this._sanitizeTableAlias(alias) : alias;
         table = this._sanitizeTable(table);
@@ -1299,7 +1307,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = '',
             totalValues = [];
@@ -1379,7 +1387,7 @@ function _buildSquel() {
     function _class9() {
       _classCallCheck(this, _class9);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class9).apply(this, arguments));
+      return _possibleConstructorReturn(this, (_class9.__proto__ || Object.getPrototypeOf(_class9)).apply(this, arguments));
     }
 
     _createClass(_class9, [{
@@ -1399,26 +1407,26 @@ function _buildSquel() {
     function _class10() {
       _classCallCheck(this, _class10);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class10).apply(this, arguments));
+      return _possibleConstructorReturn(this, (_class10.__proto__ || Object.getPrototypeOf(_class10)).apply(this, arguments));
     }
 
     _createClass(_class10, [{
       key: 'table',
       value: function table(_table2) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
         this._table(_table2, alias);
       }
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         if (!this._hasTable()) {
           throw new Error("table() needs to be called");
         }
 
-        return _get(Object.getPrototypeOf(_class10.prototype), '_toParamString', this).call(this, options);
+        return _get(_class10.prototype.__proto__ || Object.getPrototypeOf(_class10.prototype), '_toParamString', this).call(this, options);
       }
     }]);
 
@@ -1432,7 +1440,7 @@ function _buildSquel() {
     function _class11(options) {
       _classCallCheck(this, _class11);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class11).call(this, _extend({}, options, {
+      return _possibleConstructorReturn(this, (_class11.__proto__ || Object.getPrototypeOf(_class11)).call(this, _extend({}, options, {
         prefix: 'FROM'
       })));
     }
@@ -1440,7 +1448,7 @@ function _buildSquel() {
     _createClass(_class11, [{
       key: 'from',
       value: function from(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
         this._table(table, alias);
       }
@@ -1456,7 +1464,7 @@ function _buildSquel() {
     function _class12(options) {
       _classCallCheck(this, _class12);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class12).call(this, _extend({}, options, {
+      return _possibleConstructorReturn(this, (_class12.__proto__ || Object.getPrototypeOf(_class12)).call(this, _extend({}, options, {
         prefix: 'INTO',
         singleTable: true
       })));
@@ -1470,13 +1478,13 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         if (!this._hasTable()) {
           throw new Error("into() needs to be called");
         }
 
-        return _get(Object.getPrototypeOf(_class12.prototype), '_toParamString', this).call(this, options);
+        return _get(_class12.prototype.__proto__ || Object.getPrototypeOf(_class12.prototype), '_toParamString', this).call(this, options);
       }
     }]);
 
@@ -1490,7 +1498,7 @@ function _buildSquel() {
     function _class13(options) {
       _classCallCheck(this, _class13);
 
-      var _this15 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class13).call(this, options));
+      var _this15 = _possibleConstructorReturn(this, (_class13.__proto__ || Object.getPrototypeOf(_class13)).call(this, options));
 
       _this15._fields = [];
       return _this15;
@@ -1505,13 +1513,14 @@ function _buildSquel() {
     # Internally this method simply calls the field() method of this block to add each individual field.
     #
     # options.ignorePeriodsForFieldNameQuotes - whether to ignore period (.) when automatically quoting the field name
+    # options.lateral - whether to prefix a subquery with the LATERAL keyword
     */
 
 
     _createClass(_class13, [{
       key: 'fields',
       value: function fields(_fields) {
-        var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         if (_isArray(_fields)) {
           var _iteratorNormalCompletion8 = true;
@@ -1561,8 +1570,8 @@ function _buildSquel() {
     }, {
       key: 'field',
       value: function field(_field) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         alias = alias ? this._sanitizeFieldAlias(alias) : alias;
         _field = this._sanitizeField(_field);
@@ -1584,7 +1593,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         var queryBuilder = options.queryBuilder;
         var buildParameterized = options.buildParameterized;
 
@@ -1615,7 +1624,7 @@ function _buildSquel() {
                 buildParameterized: buildParameterized
               });
 
-              totalStr += ret.text;
+              totalStr += this._applyLateralFormatting(ret.text, _options && _options.lateral);
               totalValues.push.apply(totalValues, _toConsumableArray(ret.values));
             }
 
@@ -1663,7 +1672,7 @@ function _buildSquel() {
     function _class14(options) {
       _classCallCheck(this, _class14);
 
-      var _this16 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class14).call(this, options));
+      var _this16 = _possibleConstructorReturn(this, (_class14.__proto__ || Object.getPrototypeOf(_class14)).call(this, options));
 
       _this16._reset();
       return _this16;
@@ -1683,7 +1692,7 @@ function _buildSquel() {
     }, {
       key: '_set',
       value: function _set(field, value) {
-        var valueOptions = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var valueOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         if (this._values.length > 1) {
           throw new Error("Cannot set multiple rows of fields this way.");
@@ -1713,7 +1722,7 @@ function _buildSquel() {
     }, {
       key: '_setFields',
       value: function _setFields(fields) {
-        var valueOptions = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var valueOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         if ((typeof fields === 'undefined' ? 'undefined' : _typeof(fields)) !== 'object') {
           throw new Error("Expected an object but got " + (typeof fields === 'undefined' ? 'undefined' : _typeof(fields)));
@@ -1730,7 +1739,7 @@ function _buildSquel() {
     }, {
       key: '_setFieldsRows',
       value: function _setFieldsRows(fieldsRows) {
-        var valueOptions = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var valueOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
         if (!_isArray(fieldsRows)) {
           throw new Error("Expected an array of objects but got " + (typeof fieldsRows === 'undefined' ? 'undefined' : _typeof(fieldsRows)));
@@ -1785,7 +1794,7 @@ function _buildSquel() {
     function _class15() {
       _classCallCheck(this, _class15);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class15).apply(this, arguments));
+      return _possibleConstructorReturn(this, (_class15.__proto__ || Object.getPrototypeOf(_class15)).apply(this, arguments));
     }
 
     _createClass(_class15, [{
@@ -1801,7 +1810,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         var buildParameterized = options.buildParameterized;
 
 
@@ -1849,13 +1858,13 @@ function _buildSquel() {
     function _class16() {
       _classCallCheck(this, _class16);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class16).apply(this, arguments));
+      return _possibleConstructorReturn(this, (_class16.__proto__ || Object.getPrototypeOf(_class16)).apply(this, arguments));
     }
 
     _createClass(_class16, [{
       key: 'set',
       value: function set(field, value) {
-        var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         this._set(field, value, options);
       }
@@ -1874,7 +1883,7 @@ function _buildSquel() {
       value: function _toParamString() {
         var _this19 = this;
 
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         var buildParameterized = options.buildParameterized;
 
 
@@ -1918,7 +1927,7 @@ function _buildSquel() {
     function _class17(options) {
       _classCallCheck(this, _class17);
 
-      var _this20 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class17).call(this, options));
+      var _this20 = _possibleConstructorReturn(this, (_class17.__proto__ || Object.getPrototypeOf(_class17)).call(this, options));
 
       _this20._fields = [];
       _this20._query = null;
@@ -1939,7 +1948,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = '',
             totalValues = [];
@@ -1975,7 +1984,7 @@ function _buildSquel() {
     function _class18() {
       _classCallCheck(this, _class18);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class18).apply(this, arguments));
+      return _possibleConstructorReturn(this, (_class18.__proto__ || Object.getPrototypeOf(_class18)).apply(this, arguments));
     }
 
     _createClass(_class18, [{
@@ -2005,7 +2014,7 @@ function _buildSquel() {
     function _class19(options) {
       _classCallCheck(this, _class19);
 
-      var _this23 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class19).call(this, options));
+      var _this23 = _possibleConstructorReturn(this, (_class19.__proto__ || Object.getPrototypeOf(_class19)).call(this, options));
 
       _this23._groups = [];
       return _this23;
@@ -2022,7 +2031,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         return {
           text: this._groups.length ? 'GROUP BY ' + this._groups.join(', ') : '',
@@ -2040,11 +2049,10 @@ function _buildSquel() {
     /**
      * @param options.verb The prefix verb string.
      */
-
     function _class20(options) {
       _classCallCheck(this, _class20);
 
-      var _this24 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class20).call(this, options));
+      var _this24 = _possibleConstructorReturn(this, (_class20.__proto__ || Object.getPrototypeOf(_class20)).call(this, options));
 
       _this24._value = 0;
       return _this24;
@@ -2058,7 +2066,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var expr = 0 < this._value ? this.options.verb + ' ' + this.options.parameterCharacter : '';
 
@@ -2078,7 +2086,7 @@ function _buildSquel() {
     function _class21(options) {
       _classCallCheck(this, _class21);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class21).call(this, _extend({}, options, {
+      return _possibleConstructorReturn(this, (_class21.__proto__ || Object.getPrototypeOf(_class21)).call(this, _extend({}, options, {
         verb: 'OFFSET'
       })));
     }
@@ -2108,7 +2116,7 @@ function _buildSquel() {
     function _class22(options) {
       _classCallCheck(this, _class22);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class22).call(this, _extend({}, options, {
+      return _possibleConstructorReturn(this, (_class22.__proto__ || Object.getPrototypeOf(_class22)).call(this, _extend({}, options, {
         verb: 'LIMIT'
       })));
     }
@@ -2138,11 +2146,10 @@ function _buildSquel() {
     /** 
      * @param {String} options.verb The condition verb.
      */
-
     function _class23(options) {
       _classCallCheck(this, _class23);
 
-      var _this27 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class23).call(this, options));
+      var _this27 = _possibleConstructorReturn(this, (_class23.__proto__ || Object.getPrototypeOf(_class23)).call(this, options));
 
       _this27._conditions = [];
       return _this27;
@@ -2174,7 +2181,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = [],
             totalValues = [];
@@ -2237,7 +2244,7 @@ function _buildSquel() {
     function _class24(options) {
       _classCallCheck(this, _class24);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class24).call(this, _extend({}, options, {
+      return _possibleConstructorReturn(this, (_class24.__proto__ || Object.getPrototypeOf(_class24)).call(this, _extend({}, options, {
         verb: 'WHERE'
       })));
     }
@@ -2263,7 +2270,7 @@ function _buildSquel() {
     function _class25(options) {
       _classCallCheck(this, _class25);
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class25).call(this, _extend({}, options, {
+      return _possibleConstructorReturn(this, (_class25.__proto__ || Object.getPrototypeOf(_class25)).call(this, _extend({}, options, {
         verb: 'HAVING'
       })));
     }
@@ -2289,7 +2296,7 @@ function _buildSquel() {
     function _class26(options) {
       _classCallCheck(this, _class26);
 
-      var _this30 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class26).call(this, options));
+      var _this30 = _possibleConstructorReturn(this, (_class26.__proto__ || Object.getPrototypeOf(_class26)).call(this, options));
 
       _this30._orders = [];
       return _this30;
@@ -2315,8 +2322,8 @@ function _buildSquel() {
           if (dir === undefined) {
             dir = 'ASC'; // Default to asc
           } else if (dir !== null) {
-              dir = dir ? 'ASC' : 'DESC'; // Convert truthy to asc
-            }
+            dir = dir ? 'ASC' : 'DESC'; // Convert truthy to asc
+          }
         }
 
         this._orders.push({
@@ -2328,7 +2335,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = '',
             totalValues = [];
@@ -2388,7 +2395,7 @@ function _buildSquel() {
     function _class27(options) {
       _classCallCheck(this, _class27);
 
-      var _this31 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class27).call(this, options));
+      var _this31 = _possibleConstructorReturn(this, (_class27.__proto__ || Object.getPrototypeOf(_class27)).call(this, options));
 
       _this31._joins = [];
       return _this31;
@@ -2404,16 +2411,19 @@ function _buildSquel() {
     # 'condition' is an optional condition (containing an SQL expression) for the JOIN.
     #
     # 'type' must be either one of INNER, OUTER, LEFT or RIGHT. Default is 'INNER'.
-    #
+    # 
+    # 'options' is an object with additional options that can be applied to the join:
+    # * 'lateral' will apply the LATERAL keyword to the join
     */
 
 
     _createClass(_class27, [{
       key: 'join',
       value: function join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var type = arguments.length <= 3 || arguments[3] === undefined ? 'INNER' : arguments[3];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'INNER';
+        var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
 
         table = this._sanitizeTable(table, true);
         alias = alias ? this._sanitizeTableAlias(alias) : alias;
@@ -2423,61 +2433,68 @@ function _buildSquel() {
           type: type,
           table: table,
           alias: alias,
-          condition: condition
+          condition: condition,
+          options: options
         });
       }
     }, {
       key: 'left_join',
       value: function left_join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'LEFT');
+        this.join(table, alias, condition, 'LEFT', options);
       }
     }, {
       key: 'right_join',
       value: function right_join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'RIGHT');
+        this.join(table, alias, condition, 'RIGHT', options);
       }
     }, {
       key: 'outer_join',
       value: function outer_join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'OUTER');
+        this.join(table, alias, condition, 'OUTER', options);
       }
     }, {
       key: 'left_outer_join',
       value: function left_outer_join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'LEFT OUTER');
+        this.join(table, alias, condition, 'LEFT OUTER', options);
       }
     }, {
       key: 'full_join',
       value: function full_join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'FULL');
+        this.join(table, alias, condition, 'FULL', options);
       }
     }, {
       key: 'cross_join',
       value: function cross_join(table) {
-        var alias = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var condition = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'CROSS');
+        this.join(table, alias, condition, 'CROSS', options);
       }
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = "",
             totalValues = [];
@@ -2493,6 +2510,7 @@ function _buildSquel() {
             var table = _step12$value.table;
             var alias = _step12$value.alias;
             var condition = _step12$value.condition;
+            var joinOptions = _step12$value.options;
 
             totalStr = _pad(totalStr, this.options.separator);
 
@@ -2509,6 +2527,8 @@ function _buildSquel() {
             } else {
               tableStr = this._formatTableName(table);
             }
+
+            tableStr = this._applyLateralFormatting(tableStr, joinOptions && joinOptions.lateral);
 
             totalStr += type + ' JOIN ' + tableStr;
 
@@ -2567,7 +2587,7 @@ function _buildSquel() {
     function _class28(options) {
       _classCallCheck(this, _class28);
 
-      var _this32 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class28).call(this, options));
+      var _this32 = _possibleConstructorReturn(this, (_class28.__proto__ || Object.getPrototypeOf(_class28)).call(this, options));
 
       _this32._unions = [];
       return _this32;
@@ -2585,7 +2605,7 @@ function _buildSquel() {
     _createClass(_class28, [{
       key: 'union',
       value: function union(table) {
-        var type = arguments.length <= 1 || arguments[1] === undefined ? 'UNION' : arguments[1];
+        var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'UNION';
 
         table = this._sanitizeTable(table);
 
@@ -2605,7 +2625,7 @@ function _buildSquel() {
     }, {
       key: '_toParamString',
       value: function _toParamString() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         var totalStr = '',
             totalValues = [];
@@ -2686,11 +2706,10 @@ function _buildSquel() {
     #
     # blocks - array of cls.BaseBuilderBlock instances to build the query with.
     */
-
     function _class29(options, blocks) {
       _classCallCheck(this, _class29);
 
-      var _this33 = _possibleConstructorReturn(this, Object.getPrototypeOf(_class29).call(this, options));
+      var _this33 = _possibleConstructorReturn(this, (_class29.__proto__ || Object.getPrototypeOf(_class29)).call(this, options));
 
       _this33.blocks = blocks || [];
 
@@ -2778,7 +2797,7 @@ function _buildSquel() {
           }
         }
 
-        _get(Object.getPrototypeOf(_class29.prototype), 'registerValueHandler', this).call(this, type, handler);
+        _get(_class29.prototype.__proto__ || Object.getPrototypeOf(_class29.prototype), 'registerValueHandler', this).call(this, type, handler);
 
         return this;
       }
@@ -2829,7 +2848,7 @@ function _buildSquel() {
         var _this34 = this,
             _ref2;
 
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
         options = _extend({}, this.options, options);
 
@@ -2907,13 +2926,13 @@ function _buildSquel() {
     _inherits(_class30, _cls$QueryBuilder);
 
     function _class30(options) {
-      var blocks = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+      var blocks = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
       _classCallCheck(this, _class30);
 
       blocks = blocks || [new cls.StringBlock(options, 'SELECT'), new cls.FunctionBlock(options), new cls.DistinctBlock(options), new cls.GetFieldBlock(options), new cls.FromTableBlock(options), new cls.JoinBlock(options), new cls.WhereBlock(options), new cls.GroupByBlock(options), new cls.HavingBlock(options), new cls.OrderByBlock(options), new cls.LimitBlock(options), new cls.OffsetBlock(options), new cls.UnionBlock(options)];
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class30).call(this, options, blocks));
+      return _possibleConstructorReturn(this, (_class30.__proto__ || Object.getPrototypeOf(_class30)).call(this, options, blocks));
     }
 
     return _class30;
@@ -2924,13 +2943,13 @@ function _buildSquel() {
     _inherits(_class31, _cls$QueryBuilder2);
 
     function _class31(options) {
-      var blocks = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+      var blocks = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
       _classCallCheck(this, _class31);
 
       blocks = blocks || [new cls.StringBlock(options, 'UPDATE'), new cls.UpdateTableBlock(options), new cls.SetFieldBlock(options), new cls.WhereBlock(options), new cls.OrderByBlock(options), new cls.LimitBlock(options)];
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class31).call(this, options, blocks));
+      return _possibleConstructorReturn(this, (_class31.__proto__ || Object.getPrototypeOf(_class31)).call(this, options, blocks));
     }
 
     return _class31;
@@ -2941,7 +2960,7 @@ function _buildSquel() {
     _inherits(_class32, _cls$QueryBuilder3);
 
     function _class32(options) {
-      var blocks = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+      var blocks = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
       _classCallCheck(this, _class32);
 
@@ -2949,7 +2968,7 @@ function _buildSquel() {
         singleTable: true
       })), new cls.JoinBlock(options), new cls.WhereBlock(options), new cls.OrderByBlock(options), new cls.LimitBlock(options)];
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class32).call(this, options, blocks));
+      return _possibleConstructorReturn(this, (_class32.__proto__ || Object.getPrototypeOf(_class32)).call(this, options, blocks));
     }
 
     return _class32;
@@ -2960,13 +2979,13 @@ function _buildSquel() {
     _inherits(_class33, _cls$QueryBuilder4);
 
     function _class33(options) {
-      var blocks = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+      var blocks = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
       _classCallCheck(this, _class33);
 
       blocks = blocks || [new cls.StringBlock(options, 'INSERT'), new cls.IntoTableBlock(options), new cls.InsertFieldValueBlock(options), new cls.InsertFieldsFromQueryBlock(options)];
 
-      return _possibleConstructorReturn(this, Object.getPrototypeOf(_class33).call(this, options, blocks));
+      return _possibleConstructorReturn(this, (_class33.__proto__ || Object.getPrototypeOf(_class33)).call(this, options, blocks));
     }
 
     return _class33;
@@ -3033,7 +3052,7 @@ squel.flavours = {};
 
 // Setup Squel for a particular SQL flavour
 squel.useFlavour = function () {
-  var flavour = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var flavour = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   if (!flavour) {
     return squel;
