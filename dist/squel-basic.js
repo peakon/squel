@@ -636,6 +636,17 @@ function _buildSquel() {
 
         return str;
       }
+    }, {
+      key: '_applyLateralFormatting',
+      value: function _applyLateralFormatting(str) {
+        var lateral = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+        if (str && typeof str === 'string' && lateral) {
+          return 'LATERAL ' + str;
+        }
+
+        return str;
+      }
 
       /**
        * Build given string and its corresponding parameter values into
@@ -1495,6 +1506,7 @@ function _buildSquel() {
     # Internally this method simply calls the field() method of this block to add each individual field.
     #
     # options.ignorePeriodsForFieldNameQuotes - whether to ignore period (.) when automatically quoting the field name
+    # options.lateral - whether to prefix a subquery with the LATERAL keyword
     */
 
 
@@ -1605,7 +1617,7 @@ function _buildSquel() {
                 buildParameterized: buildParameterized
               });
 
-              totalStr += ret.text;
+              totalStr += this._applyLateralFormatting(ret.text, _options && _options.lateral);
               ret.values.forEach(function (value) {
                 return totalValues.push(value);
               });
@@ -2400,7 +2412,9 @@ function _buildSquel() {
     # 'condition' is an optional condition (containing an SQL expression) for the JOIN.
     #
     # 'type' must be either one of INNER, OUTER, LEFT or RIGHT. Default is 'INNER'.
-    #
+    # 
+    # 'options' is an object with additional options that can be applied to the join:
+    # * 'lateral' will apply the LATERAL keyword to the join
     */
 
 
@@ -2410,6 +2424,7 @@ function _buildSquel() {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
         var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'INNER';
+        var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
 
         table = this._sanitizeTable(table, true);
         alias = alias ? this._sanitizeTableAlias(alias) : alias;
@@ -2419,7 +2434,8 @@ function _buildSquel() {
           type: type,
           table: table,
           alias: alias,
-          condition: condition
+          condition: condition,
+          options: options
         });
       }
     }, {
@@ -2427,48 +2443,54 @@ function _buildSquel() {
       value: function left_join(table) {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'LEFT');
+        this.join(table, alias, condition, 'LEFT', options);
       }
     }, {
       key: 'right_join',
       value: function right_join(table) {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'RIGHT');
+        this.join(table, alias, condition, 'RIGHT', options);
       }
     }, {
       key: 'outer_join',
       value: function outer_join(table) {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'OUTER');
+        this.join(table, alias, condition, 'OUTER', options);
       }
     }, {
       key: 'left_outer_join',
       value: function left_outer_join(table) {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'LEFT OUTER');
+        this.join(table, alias, condition, 'LEFT OUTER', options);
       }
     }, {
       key: 'full_join',
       value: function full_join(table) {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'FULL');
+        this.join(table, alias, condition, 'FULL', options);
       }
     }, {
       key: 'cross_join',
       value: function cross_join(table) {
         var alias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var condition = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-        this.join(table, alias, condition, 'CROSS');
+        this.join(table, alias, condition, 'CROSS', options);
       }
     }, {
       key: '_toParamString',
@@ -2489,6 +2511,7 @@ function _buildSquel() {
             var table = _ref6.table;
             var alias = _ref6.alias;
             var condition = _ref6.condition;
+            var joinOptions = _ref6.options;
 
             totalStr = _pad(totalStr, this.options.separator);
 
@@ -2507,6 +2530,8 @@ function _buildSquel() {
             } else {
               tableStr = this._formatTableName(table);
             }
+
+            tableStr = this._applyLateralFormatting(tableStr, joinOptions && joinOptions.lateral);
 
             totalStr += type + ' JOIN ' + tableStr;
 
