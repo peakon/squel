@@ -55,9 +55,6 @@ gulp.task('build-full', function() {
     ])
     .pipe( concat('squel.js') )
     .pipe( replace(/<<VERSION_STRING>>/i, SQUEL_VERSION) )
-    .pipe( babel({
-      presets: ['env']
-    }) )
     .pipe( umd({
       exports: function (file) {
         return 'squel';
@@ -67,7 +64,6 @@ gulp.task('build-full', function() {
       }
     }))
     .pipe( gulp.dest('./dist') )
-    .pipe( uglify() )
     .pipe( insert.prepend('/*! squel | https://github.com/hiddentao/squel | BSD license */') )
     .pipe( concat('squel.min.js') )
     .pipe( gulp.dest('./dist') )
