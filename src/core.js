@@ -213,13 +213,7 @@ function _buildSquel(flavour = null) {
     constructor (options) {
       super();
 
-      let defaults = JSON.parse(JSON.stringify(cls.DefaultQueryBuilderOptions));
-      // for function values, etc we need to manually copy
-      ['stringFormatter'].forEach(p => {
-        defaults[p] = cls.DefaultQueryBuilderOptions[p]
-      })
-
-      this.options = _extend({}, defaults, options);
+      this.options = _extend(_clone(cls.DefaultQueryBuilderOptions), options);
     }
 
     /**
